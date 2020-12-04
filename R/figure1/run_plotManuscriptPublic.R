@@ -1,4 +1,6 @@
 
+public_seurat = comparison_cml_seurat
+
 dir.create("results/figure1/", showWarnings = F)
 
 Idents(public_seurat) <- public_seurat$RNA_snn_res.0.5 %>% extractClusterNumber() %>% as.numeric %>% as.factor() %>% getClusterPhenotypesPublic()
@@ -216,21 +218,38 @@ ggsave("results/figure1/box_clusters_cmv_knownpatient.pdf", width = 10, height =
 
 
 
-median_df     <- df %>% group_by(project, cluster) %>% summarise(median = median(prop)) %>% group_by(cluster) %>% top_n(n = 1, wt = median) %>% arrange(desc(median))
-umap_means_df <- public_seurat@reductions$latent_umap@cell.embeddings %>% as.data.frame %>% bind_cols(public_seurat@meta.data) %>% group_by(cluster) %>% summarise(umap1 = median(latent_umap_1), umap2 = median(latent_umap_2)) %>%
-  left_join(median_df)
 
-public_seurat@reductions$latent_umap@cell.embeddings %>% as.data.frame %>% bind_cols(public_seurat@meta.data) %>%
+public_seurat@reductions$latent_umap@cell.embeddings %>% as.data.frame %>% bind_cols(public_seurat@meta.data) %>% 
   ggplot(aes(latent_umap_1, latent_umap_2, color = project)) + stat_density_2d(aes(fill = ..level..), geom = "polygon") + facet_wrap(~project, ncol = 3) + scale_fill_distiller(direction=1) + theme(legend.position = "none") + theme_bw(base_size = 12) + labs(x = "UMAP 1", y = "UMAP 2") + facets_nice +
   ggrepel::geom_text_repel(data = umap_means_df, aes(umap1,umap2,label=cluster), color = "black", size = 3.5) +
   scale_color_manual(values = getPalette3(7)) + guides(color=FALSE) + theme(legend.position = "none")
 ggsave("results/figure1//umap_dens.png", width = 7.5, height = 4)
 
 
+public_seurat$project <- "none"
+public_seurat$project <- ifelse(grepl(public_seurat$orig.ident, pattern = "^CLL"), "CLL", public_seurat$project)
+public_seurat$project <- ifelse(grepl(public_seurat$orig.ident, pattern = "^Batch"), "CML off TKI", public_seurat$project)
+public_seurat$project <- ifelse(grepl(public_seurat$orig.ident, pattern = "baseline"), "CML on TKI", public_seurat$project)
+public_seurat$project <- ifelse(grepl(public_seurat$orig.ident, pattern = "^7"), "CML dg", public_seurat$project)
+public_seurat$project <- ifelse(grepl(public_seurat$orig.ident, pattern = "^LB"), "NSCLC from blood", public_seurat$project)
+public_seurat$project <- ifelse(grepl(public_seurat$orig.ident, pattern = "^RB"), "RCC from blood", public_seurat$project)
+public_seurat$project <- ifelse(grepl(public_seurat$orig.ident, pattern = "^healthy"), "Healthy", public_seurat$project)
+public_seurat$project <- factor(as.character(public_seurat$project), levels = c("CML dg", "CML on TKI", "CML off TKI", "Healthy", "CLL", "NSCLC from blood", "RCC from blood"))
 
+median_df     <- public_seurat@meta.data %>% filter(cluster != "5 CLL cells") %>%  group_by(project, cluster) %>% summarise(n=n()) %>% group_by(project) %>% top_n(n = 5, wt = n)
+umap_means_df <- public_seurat@reductions$latent_umap@cell.embeddings %>% as.data.frame %>% bind_cols(public_seurat@meta.data) %>% group_by(cluster) %>% summarise(umap1 = median(latent_umap_1), umap2 = median(latent_umap_2)) %>% left_join(median_df)
+umap_means_df <- median_df %>% left_join(umap_means_df)
 
-
-
+public_seurat@reductions$latent_umap@cell.embeddings %>% as.data.frame %>% bind_cols(public_seurat@meta.data) %>% 
+  filter(cluster != "5 CLL cells") %>% 
+  filter(!is.na(project)) %>% 
+  ggplot(aes(latent_umap_1, latent_umap_2, color = project)) + theme_bw(base_size = 12) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon") + 
+  # geom_point() +
+  ggrepel::geom_text_repel(data = subset(umap_means_df, !is.na(project)), aes(umap1,umap2,label=cluster), color = "black", size = 3.5, nudge_y = 3, segment.size = 0.2, segment.color = "grey50", direction = "x") +
+  facet_wrap(~project, ncol = 4) + 
+  scale_fill_distiller(direction=1) + theme(legend.position = "none") + theme_bw(base_size = 12) + labs(x = "UMAP 1", y = "UMAP 2") + facets_nice + scale_color_manual(values = getPalette3(7)) + guides(color=FALSE) + theme(legend.position = "none")
+ggsave("results/figure1//umap_dens.png", width = 14, height = 7)
 
 
 ### Study NK cells
@@ -244,9 +263,7 @@ diet_nk_seurat$project <- ifelse(grepl(diet_nk_seurat$orig.ident, pattern = "^7"
 diet_nk_seurat$project <- ifelse(grepl(diet_nk_seurat$orig.ident, pattern = "^LB"), "NSCLC from blood", diet_nk_seurat$project)
 diet_nk_seurat$project <- ifelse(grepl(diet_nk_seurat$orig.ident, pattern = "^RB"), "RCC from blood", diet_nk_seurat$project)
 diet_nk_seurat$project <- ifelse(grepl(diet_nk_seurat$orig.ident, pattern = "^healthy"), "Healthy", diet_nk_seurat$project)
-
 diet_nk_seurat$project <- factor(as.character(diet_nk_seurat$project), levels = c("CML dg", "CML on TKI", "CML off TKI", "Healthy", "CLL", "NSCLC from blood", "RCC from blood"))
-
 
 p <- DimPlot(diet_nk_seurat, cols = getPalette5(8), label = T, repel = T) + theme_bw(base_size = 12) + theme(legend.position = "none") + labs(x = "UMAP1", y = "UMAP2")
 ggsave(plot = p, "results/figure1/latent_nk_umap.png", width = 7, height = 6)
@@ -314,11 +331,12 @@ ggsave("results/figure1/bar_nk_clusters2.pdf", width = 5, height = 4)
 
 
 kir_genes <- grep("^KIR", rownames(diet_nk_seurat), value = T)
+
 p <- FeaturePlot(diet_nk_seurat, features = kir_genes, ncol = 3, cols = c("lightgrey", "red"), order = T) + theme_bw(base_size = 12)
 ggsave(plot = p, "results/figure1/umap_nk_kir.png", width = 9, height = 7)
 
 diet_nk_seurat2 <- diet_nk_seurat
-Idents(diet_nk_seurat2) <- diet_nk_seurat2$orig.ident
+Idents(diet_nk_seurat2) <- gsub("Batch", "Patient", diet_nk_seurat2$orig.ident)
 DotPlot(diet_nk_seurat2, features = kir_genes, cols = "RdYlBu") + labs(x = "", y = "") + coord_flip() + ggpubr::rotate_x_text(angle = 90) + theme(legend.position = "top")
 ggsave("results/figure1/dotplot_nk_kir.pdf", width = 8, height = 4)
 
