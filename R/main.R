@@ -1,6 +1,6 @@
 
 me=system("whoami", intern = T)
-setwd(paste0("/Users/", me, "/Dropbox/cml_stop_clean/"))
+setwd(paste0("/Users/", me, "/Dropbox/cml_stop/"))
 
 library(Seurat)
 library(dplyr)

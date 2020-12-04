@@ -1,18 +1,20 @@
 
 
-zhang19_genes_df <- fread("/Users/janihuuh/Dropbox/AML_TIM3/data/cluster_markers/zhang_cell_2019_clusters.txt")
-zhang19_markers <- strsplit(zhang19_genes_df$V2, split = ", ")
-names(zhang19_markers) <- make.names(paste0(zhang19_genes_df$V1, "_", zhang19_genes_df$V3))
 
+cycle.genes  <- c("ANLN", "ASPM","BIRC5","CCNA2","CCNB1","CCNB2","CCND1","CD63","CDC20","CDCA8","CDKN3","CENPE","CENPF",
+                  "CEP55","CKAP2L","DLGAP5","FOXM1","GTSE1","H2AFZ","HIST1H1B", "HIST1H1C", "HIST1H1D", "HIST1H1E", "HIST1H2AJ",
+                  "HIST1H4C", "HJURP", "HMGB1", "HMGB2", "HMMR", "KIF11", "KIF14", "KIF15", "KIF2C", "LMNA",
+                  "MCM3", "MKI67", "NCAPG", "NUSAP1", "PCNA", "PLK1", "PRC1", "RRM2", "SMC4", "STMN1", "TK1", "TOP2A", "TPX2", "TUBA1B",
+                  "TUBB", "TYMS", "UBE2C")
+
+                  
+cytolytic   <- c("GZMB", "GZMH", "PRF1", "GNLY", "GZMA")
+dufva_genes <- rev(unique(c("CD3E", "NCAM1", "GZMK", "SELL", "XCL1", "XCL2", "KLRC1", "IL7R", "LTB", "FCGR3A", "GZMA", "GZMB", "GZMH", "GZMM", "KLRC2", "ZEB2", "KLF2", "PRDM1", "GZMH", "LAG3")))
 
 getClonalityGenes <- function(object){
 
   clonality_genes <- c(grep("^TRAV", rownames(object), value = T), grep("^TRBV", rownames(object), value = T),
                        grep("^TRGV", rownames(object), value = T), grep("^TRDV", rownames(object), value = T),
-
-                       grep("^TRAJ", rownames(object), value = T), grep("^TRBJ", rownames(object), value = T),
-                       grep("^TRGJ", rownames(object), value = T), grep("^TRDJ", rownames(object), value = T),
-
                        grep("^IGLV", rownames(object), value = T), grep("^IGLC", rownames(object), value = T),
                        grep("^IGLL", rownames(object), value = T), grep("^IGKV", rownames(object), value = T),
                        grep("^IGHV", rownames(object), value = T), grep("^IGKC", rownames(object), value = T),
@@ -33,15 +35,16 @@ getUnwantedGenes <- function(object){
 
 
 ## Plot most notable markers
-big_markers           <- c("CD3E", "TRAC", "TRBC2",        ## T cell
+## Plot most notable markers
+big_markers           <- c("CD3E", "TRAC", "TRBC2", ## T cell
                            "GNLY", "CD8A", "CD8B", "GZMB", ## CD8+ cell
                            "NKG7", "FCGR3A", "PRF1","KLRG1", "KLRB1", "KLRD1", "NCAM1", ## NK-cell
-                           "CD4", "IL7R", "IFNG", "FOXP3", ## CD4+ cell
-                           "LYZ", "CD14", "CST3",          ## monocytes
+                           "CD4", "IL7R", "IFNG", "FOXP3", # CD4+ cell
+                           "LYZ", "CD14", "CST3", ## monocytes
                            "CLEC4C", "PTPRS", "IRF8", "TCF4", ## pDC
-                           "MS4A1", "CD19",                   ## b cells
+                           "MS4A1", "CD19", ## b cells
                            "TNFRSF17", "XBP1", "JCHAIN",
-                           "MKI67" )                          ## plasma cells
+                           "MKI67" ) ## plasma cells
 inhibitory_long       <- c("CD28", "ICOS", "CTLA4", "PDCD1", "BTLA", "TNFRSF14", "CD27", "TNFRSF9", "TNFRSF4", "TNFRSF25", "TNFRSF9", "CD2", "CD244", "HAVCR1", "HAVCR2", "TIGIT", "CD226", "CD160", "LAG3", "LAIR1", "CD80")
 tcell_activation      <- c("CD69", "CCR7","CD27", "BTLA","CD40LG","IL2RA","CD3E","CD47","EOMES","GNLY", "GZMA","GZMB", "PRF1", "IFNG","CD8A", "CD8B",  "LAMP1","LAG3","CTLA4","HLA-DRA","TNFRSF4","ICOS","TNFRSF9","TNFRSF18")
 
@@ -78,7 +81,6 @@ cd4_tfh               <- c("CXCR5", "BCL6", "ICA1", "TOX", "TOX2", "IL6ST", "MAG
 cd4_th1               <- c("GZMK", "GZMA", "CCL5", "IFNG", "RUNX3", "EOMES", "CXCR3", "CXCR4", "CD44")
 cd4_th17              <- c("IL23R", "RORC", "FURIN", "CTSH", "CCR6", "KLRB1", "CAPG", "ITGAE")
 cd4_th1_like          <- c("IFNG", "CXCR3", "BHLHE40", "GZMB", "PDCD1", "HAVCR2", "ICOS", "IGFLR1", "ITGAE")
-
 cd4_treg_blood        <- c("FOXP3", "IL2RA", "IL10RA", "IKZF2", "RTKN2", "CDC25B", "S1PR4")
 cd4_tfr               <- c("FOXP3", "IL2RA", "CXCR5", "PDCD1", "IL10", "CCR4", "CD69")
 cd4_treg_tum          <- c("FOXP3", "CCR8", "TNFRSF18", "LAYN", "TNFRSF9", "IKZF2", "RTKN2", "CTLA4", "BATF", "IL21R")
@@ -89,7 +91,6 @@ names(zhang_cd8_markers) <- c("cd8_tn", "cd8_cm", "cd8_emra", "cd8_em", "cd8_rm"
 zhang_cd4_markers        <- list(cd4_tn, cd4_tcm_n, cd4_emra, cd4_tcm_n, cd4_trm, cd4_tfh, cd4_th1, cd4_th17, cd4_th1_like, cd4_treg_blood, cd4_treg_tum)
 names(zhang_cd4_markers) <- c("cd4_tn", "cd4_tcm_n", "cd4_emra", "cd4_tcm_n", "cd4_trm", "cd4_tfh", "cd4_th1", "cd4_th17", "cd4_th1_like", "cd4_treg_blood", "cd4_treg_tum")
 zhang_markers            <- c(zhang_cd8_markers, zhang_cd4_markers)
-
 
 
 
@@ -121,6 +122,7 @@ pro_b                 <- c("CD24", "EBF1", "MME", "VPREB1")
 pro_b_b               <- c("PAX5", "CD19", "CD79")
 b                     <- c("MS4A1", "BANK1")
 plasma                <- c("MZB1", "IGLL5", "JCHAIN")
+b_mark                <- list(pro_b = pro_b, pro_b_b = pro_b_b, b = b, plasma = plasma)
 
 t_ctl                 <- c("CD3D", "CD3G")
 t_ctl_nk              <- c("IL32", "IL7R")
@@ -132,6 +134,7 @@ nk                    <- c("KLRB1", "KLRD1", "GZMB", "NCAM1")
 lymphoid_mark         <- list(pro_b = pro_b, pro_b_b = pro_b_b, b = b, plasma = plasma, t_ctl = t_ctl, t_ctl_nk = t_ctl_nk, t_cell = t_cell, ctl_nk = ctl_nk, ctl = ctl, nk = nk)
 
 van_galen_markers     <- c(undiff_mark, myeloid_mark, erythroid_mark, lymphoid_mark)
+b_markers_genes     <- b_mark %>% unlist %>% unique %>% rev
 
 
 # Pfefferle et al. biorxiv 2019

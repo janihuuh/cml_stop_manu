@@ -16,23 +16,11 @@ vdjdb_new=$application_files/data/selected_tcrb/databases/vdjdb_new
 cd $files/tcrb_data/unsorted/cml_sc/
 cml_unsort_sc=$(ls -d "$PWD"/*);
 
-cd $files/tcrb_data/unsorted/dasastop/
-cml_unsort_dasastop=$(ls -d "$PWD"/*);
-
 cd $files/tcrb_data/unsorted/cml/
 cml_unsort_cml=$(ls -d "$PWD"/*);
 
-cd $files/tcrb_data/unsorted/bfore/
-cml_unsort_bfore=$(ls -d "$PWD"/*);
-
-cd $files/tcrb_data/sorted/
-cml_sort=$(ls -d "$PWD"/*);
-
 cd /Users/$me/Dropbox/Emerson/data/vdjt/
 emerson=$(ls -d "$PWD"/*);
-
-cd $files/tcrb_data/sorted/pr1_data2
-cml_sort2=$(ls -d "$PWD"/*);
 
 ###############
 cd $files
@@ -40,49 +28,21 @@ cd $files
 clear
 
 
-
 ## Preprocess; convert into more human readable format
-java -Xmx4G -jar $vdj Convert -S ImmunoSeqV2 $cml_unsort_sc       $files/tcrb_data/unsorted/cml_sc/
-java -Xmx4G -jar $vdj Convert -S ImmunoSeqV2 $cml_unsort_dasastop $files/tcrb_data/unsorted/dasastop/
-java -Xmx4G -jar $vdj Convert -S ImmunoSeqV2 $cml_unsort_bfore $files/tcrb_data/unsorted/bfore/
+java -Xmx4G -jar $vdj Convert -S ImmunoSeqV2 $cml_unsort_sc $files/tcrb_data/unsorted/cml_sc/
 java -Xmx4G -jar $vdj Convert -S ImmunoSeqV2 $cml_unsort_cml $files/tcrb_data/unsorted/cml/
-
-java -Xmx4G -jar $vdj Convert -S ImmunoSeqV2 $cml_sort      $files/tcrb_data/sorted/
-java -Xmx4G -jar $vdj Convert -S ImmunoSeqV2 $cml_sort2      $files/tcrb_data/sorted/pr1_data2/
 
 ## Remove unproductive clonotypes
 java -Xmx4G -jar $vdj FilterNonFunctional $cml_unsort_sc $files/tcrb_data/unsorted/cml_sc/
-java -Xmx4G -jar $vdj FilterNonFunctional $cml_unsort_dasastop $files/tcrb_data/unsorted/dasastop/
-java -Xmx4G -jar $vdj FilterNonFunctional $cml_unsort_bfore $files/tcrb_data/unsorted/bfore/
 java -Xmx4G -jar $vdj FilterNonFunctional $cml_unsort_cml $files/tcrb_data/unsorted/cml/
-
-java -Xmx4G -jar $vdj FilterNonFunctional $cml_sort   $files/tcrb_data/sorted/
-java -Xmx4G -jar $vdj FilterNonFunctional $cml_sort2   $files/tcrb_data/sorted/pr1_data2/filt/
 
 ## Subsample emerson to 40k
 java -Xmx4G -jar $vdj DownSample -x	40000 $emerson $files/tcrb_data/unsorted/emerson40k/
 
-
 ## Calc diversity stats for each sample
-unsort=$(echo $cml_unsort_sc $cml_unsort_dasastop $cml_unsort_bfore $cml_unsort_cml)
+unsort=$(echo $cml_unsort_sc $cml_unsort_cml)
 unsort_healthy=$(echo $cml_unsort_sc $cml_unsort_dasastop $emerson)
 
 java -Xmx4G -jar $vdj CalcDiversityStats --intersect-type aa $unsort $files/tcrb_data/results/diversity/cml_unsampled
-# java -Xmx4G -jar $vdj CalcDiversityStats --intersect-type aa $unsort_healthy $files/tcrb_data/results/diversity/cml_unsampled_healthy
-
-## With downsampled, to 10k reads
 java -Xmx4G -jar $vdj CalcDiversityStats --intersect-type aa --downsample-to 10000 $unsort $files/tcrb_data/results/diversity/10k_sampled
 java -Xmx4G -jar $vdj CalcDiversityStats --intersect-type aa --downsample-to 10000 $unsort_healthy $files/tcrb_data/results/diversity/10k_sampled_w_healthy
-
-
-
-
-## GLIPH
-gliph=/Users/hru/Documents/Laaketieteen_tohtori/applications/gliph-master/gliph/bin/gliph-group-discovery.pl
-$gliph --kmer_mindepth=3 --simdepth=1000 --tcr $files/tcrb_data/gliph/pr1_total_filtered_gliph.txt
-$gliph --kmer_mindepth=3 --simdepth=1000 --tcr $files/tcrb_data/gliph/pr1_total_unfiltered_gliph.txt
-
-
-
-## Pool all Emerson
-java -Xmx120G -jar $vdj JoinSamples --intersect-type aa --times-detected 3 --compress $emerson /Users/$me/Dropbox/Emerson/results/public/emerson_public
